@@ -236,19 +236,33 @@ def main():
             buttons = {
                 "mode1": {
                     "BTN_TRIGGER": "a", "BTN_THUMB": "rb", "BTN_THUMB2": "b",
-                    "BTN_TOP": "x", "BTN_TOP2": "y", "BTN_PINKIE": "lb",
-                    "BTN_BASE": "ls", "BTN_BASE2": "rs",
+                    "BTN_TOP": "x", "BTN_TOP2": "y",
+                    "BTN_BASE": "lb", "BTN_BASE2": "ls",
                     "BTN_BASE3": "select_mode1", "BTN_BASE4": "select_mode2",
-                    "BTN_BASE5": "select_mode3", "BTN_BASE6": "view"
+                    "BTN_BASE5": "select_mode3", "BTN_BASE6": "rs"
                 },
                 "mode2": {
                     "BTN_TRIGGER": "a", "BTN_THUMB": "rb", "BTN_THUMB2": "lb",
-                    "BTN_TOP": "y", "BTN_TOP2": "x", "BTN_PINKIE": "b"
+                    "BTN_TOP": "y", "BTN_TOP2": "x", "BTN_BASE": "ls", "BTN_BASE2": "rs"
                 },
                 "mode3": {
-                    "BTN_TRIGGER": "a", "BTN_THUMB": "view", "BTN_THUMB2": "menu"
+                    "BTN_TRIGGER": "a", "BTN_THUMB": "view", "BTN_THUMB2": "menu",
+                    "BTN_TOP": "b", "BTN_TOP2": "x"
                 }
             }
+
+        # Detect the menu-suspend button (freezes axes so the throttle can't
+        # scroll the Xbox dashboard). Falls back to BTN_PINKIE if skipped.
+        print("\n=== Suspend button ===")
+        print("Pick a button to FREEZE/UNFREEZE the throttle for menu navigation.")
+        suspend_btn = detect_button(dev, "Press the button you want as the menu-suspend toggle")
+        if not suspend_btn:
+            suspend_btn = "BTN_PINKIE"
+            print(f"  none detected, defaulting to {suspend_btn}")
+        # Make sure the suspend button isn't also a game button
+        for m in buttons.values():
+            if suspend_btn in m:
+                del m[suspend_btn]
 
         cfg = {
             "_readme": [
@@ -264,6 +278,7 @@ def main():
             "host": "10.42.0.1",
             "port": 5555,
             "hat_to_dpad": True,
+            "suspend_button": suspend_btn,
             "axes": {k: {kk: vv for kk, vv in v.items() if not kk.startswith("_")}
                      for k, v in axes_cfg.items()},
             "_axis_calibration": {k: {"range": v["_calibrated_range"], "rest": v["_rest"]}
