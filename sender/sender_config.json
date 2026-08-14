@@ -1,0 +1,53 @@
+{
+  "_readme": [
+    "device_match: substring of the evdev device name (see --list).",
+    "axes: evdev ABS code -> target one of lx, ly, rx, ry, lt, rt.",
+    "  invert flips the axis, deadzone is 0..1, expo 0..1 softens the centre.",
+    "buttons: per mode layer. Key = evdev code name from --probe.",
+    "  Targets: a b x y lb rb view menu ls rs dpad_up dpad_down dpad_left dpad_right",
+    "  or select_mode1 / select_mode2 / select_mode3 for the X52 mode switch.",
+    "  select_mode entries only need to appear under mode1; they work globally.",
+    "Run --probe, press each control, and put the printed names in here."
+  ],
+
+  "device_match": "X52",
+  "host": "10.42.0.1",
+  "port": 5555,
+  "hat_to_dpad": true,
+
+  "axes": {
+    "ABS_X":  { "target": "lx", "invert": false, "deadzone": 0.05, "expo": 0.20 },
+    "ABS_Y":  { "target": "ly", "invert": true,  "deadzone": 0.05, "expo": 0.20 },
+    "ABS_RZ": { "target": "rx", "invert": false, "deadzone": 0.10, "expo": 0.30 },
+    "ABS_Z":  { "target": "ry", "invert": true,  "deadzone": 0.00, "expo": 0.0  }
+  },
+
+  "buttons": {
+    "mode1": {
+      "BTN_TRIGGER": "rb",
+      "BTN_THUMB":   "a",
+      "BTN_THUMB2":  "b",
+      "BTN_TOP":     "x",
+      "BTN_TOP2":    "y",
+      "BTN_PINKIE":  "lb",
+      "BTN_BASE":    "view",
+      "BTN_BASE2":   "menu",
+      "BTN_BASE3":   "select_mode1",
+      "BTN_BASE4":   "select_mode2",
+      "BTN_BASE5":   "select_mode3"
+    },
+    "mode2": {
+      "BTN_TRIGGER": "rb",
+      "BTN_THUMB":   "dpad_up",
+      "BTN_THUMB2":  "dpad_down",
+      "BTN_TOP":     "dpad_left",
+      "BTN_TOP2":    "dpad_right",
+      "BTN_PINKIE":  "ls"
+    },
+    "mode3": {
+      "BTN_TRIGGER": "rs",
+      "BTN_THUMB":   "view",
+      "BTN_THUMB2":  "menu"
+    }
+  }
+}

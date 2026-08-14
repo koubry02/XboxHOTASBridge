@@ -1,0 +1,24 @@
+// opi-usbc-peripheral.dts
+// Forces the Orange Pi Zero 3 (Allwinner H618) USB-C/OTG controller into
+// peripheral (gadget) mode so raw_gadget can bind to it.
+//
+// Install on OPi B with:   sudo armbian-add-overlay opi-usbc-peripheral.dts
+// then reboot. Verify with: ls /sys/class/udc   (must not be empty)
+//
+// Roll back by removing the user_overlays entry from /boot/armbianEnv.txt.
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "allwinner,sun50i-h618", "allwinner,sun50i-h616";
+};
+
+&usb_otg {
+	dr_mode = "peripheral";
+	status = "okay";
+};
+
+&usbphy {
+	status = "okay";
+};

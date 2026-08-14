@@ -1,0 +1,17 @@
+[Unit]
+Description=HOTAS Bridge – UDP receiver (-> /dev/shm/hotas_state, proxy mode)
+After=network-online.target
+Wants=network-online.target
+Before=hotas-proxy.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hotas-bridge/receiver
+ExecStart=/usr/bin/python3 /opt/hotas-bridge/receiver/hotas_receiver.py --stats
+Restart=always
+RestartSec=2
+CPUSchedulingPolicy=fifo
+CPUSchedulingPriority=50
+
+[Install]
+WantedBy=multi-user.target

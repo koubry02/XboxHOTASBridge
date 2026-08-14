@@ -1,0 +1,23 @@
+{
+    "_comment": [
+        "Both common Xbox controller interrupt IN endpoints are enabled and",
+        "point at the same script. The script validates the GIP header, so a",
+        "rule firing on the wrong endpoint is harmless. If your pad uses a",
+        "different EP, find it in usb-proxy's startup log and add it here."
+    ],
+    "control": { "modify": [], "ignore": [], "stall": [] },
+    "int": [
+        {
+            "ep_address": 81,
+            "enable": true,
+            "script_file": "scripts/gip_hotas_merge.lua"
+        },
+        {
+            "ep_address": 82,
+            "enable": true,
+            "script_file": "scripts/gip_hotas_merge.lua"
+        }
+    ],
+    "bulk": [],
+    "isoc": []
+}

@@ -1,0 +1,18 @@
+[Unit]
+Description=HOTAS Bridge – Oberon WebSocket server (X52 -> Xbox, single-Pi mode)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hotas-bridge/oberon
+ExecStart=/usr/bin/python3 /opt/hotas-bridge/oberon/oberon_server.py \
+    --config /opt/hotas-bridge/sender/sender_config.json
+Restart=always
+RestartSec=3
+# Run with elevated priority so evdev reads don't miss events under load
+CPUSchedulingPolicy=fifo
+CPUSchedulingPriority=30
+
+[Install]
+WantedBy=multi-user.target

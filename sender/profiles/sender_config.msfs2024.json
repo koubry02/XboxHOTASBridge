@@ -1,0 +1,61 @@
+{
+  "_readme": [
+    "MICROSOFT FLIGHT SIMULATOR 2024 profile.",
+    "",
+    "KEY DIFFERENCE from the Squadrons profile: throttle goes to the RIGHT",
+    "TRIGGER (rt), not the right stick. MSFS lets you bind an axis to a trigger,",
+    "and triggers are absolute 0..1023 values, so your throttle lever position",
+    "maps 1:1 to throttle setting. That is the closest you get to real HOTAS",
+    "behaviour on a console.",
+    "",
+    "In-game: Controls > filter to Throttle > bind 'THROTTLE AXIS' to the right",
+    "trigger. Do NOT use the default incremental throttle up/down bindings, that",
+    "is what makes a lever feel wrong.",
+    "",
+    "Rudder on the twist axis (rx). If you later add pedals to OPi A, move rudder",
+    "there and free rx for camera/view."
+  ],
+
+  "device_match": "X52",
+  "host": "10.42.0.1",
+  "port": 5555,
+  "hat_to_dpad": true,
+
+  "axes": {
+    "ABS_X":  { "target": "lx", "invert": false, "deadzone": 0.04, "expo": 0.30 },
+    "ABS_Y":  { "target": "ly", "invert": true,  "deadzone": 0.04, "expo": 0.30 },
+    "ABS_RZ": { "target": "rx", "invert": false, "deadzone": 0.10, "expo": 0.30 },
+    "ABS_Z":  { "target": "rt", "invert": true,  "deadzone": 0.00, "expo": 0.0  }
+  },
+
+  "buttons": {
+    "mode1": {
+      "BTN_TRIGGER": "a",
+      "BTN_THUMB":   "b",
+      "BTN_THUMB2":  "x",
+      "BTN_TOP":     "y",
+      "BTN_TOP2":    "rb",
+      "BTN_PINKIE":  "lb",
+      "BTN_BASE":    "view",
+      "BTN_BASE2":   "menu",
+      "BTN_BASE3":   "select_mode1",
+      "BTN_BASE4":   "select_mode2",
+      "BTN_BASE5":   "select_mode3",
+      "BTN_BASE6":   "ls"
+    },
+    "mode2": {
+      "BTN_TRIGGER": "rs",
+      "BTN_THUMB":   "dpad_up",
+      "BTN_THUMB2":  "dpad_down",
+      "BTN_TOP":     "dpad_left",
+      "BTN_TOP2":    "dpad_right",
+      "BTN_PINKIE":  "ls"
+    },
+    "mode3": {
+      "BTN_TRIGGER": "menu",
+      "BTN_THUMB":   "view",
+      "BTN_THUMB2":  "a",
+      "BTN_TOP":     "b"
+    }
+  }
+}

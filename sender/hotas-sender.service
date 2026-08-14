@@ -1,0 +1,17 @@
+[Unit]
+Description=HOTAS Bridge – UDP sender (X52 -> OPi B, proxy mode)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hotas-bridge/sender
+ExecStart=/usr/bin/python3 /opt/hotas-bridge/sender/hotas_sender.py \
+    --config /opt/hotas-bridge/sender/sender_config.json
+Restart=always
+RestartSec=2
+CPUSchedulingPolicy=fifo
+CPUSchedulingPriority=50
+
+[Install]
+WantedBy=multi-user.target
