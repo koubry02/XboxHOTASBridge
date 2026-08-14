@@ -61,7 +61,7 @@
       "BTN_TOP": "x",
       "BTN_TOP2": "y",
       "BTN_BASE": "lb",
-      "BTN_BASE2": "ls",
+      "BTN_BASE2": "lt_button",
       "BTN_BASE3": "select_mode1",
       "BTN_BASE4": "select_mode2",
       "BTN_BASE5": "select_mode3",
@@ -71,17 +71,20 @@
       "BTN_TRIGGER": "a",
       "BTN_THUMB": "rb",
       "BTN_THUMB2": "lb",
-      "BTN_TOP": "y",
-      "BTN_TOP2": "x",
-      "BTN_BASE": "ls",
-      "BTN_BASE2": "rs"
+      "BTN_TOP": "ls",
+      "BTN_TOP2": "rs",
+      "BTN_BASE": "lt_button",
+      "BTN_BASE2": "rt_button"
     },
     "mode3": {
       "BTN_TRIGGER": "a",
-      "BTN_THUMB": "view",
-      "BTN_THUMB2": "menu",
-      "BTN_TOP": "b",
-      "BTN_TOP2": "x"
+      "BTN_THUMB": "b",
+      "BTN_THUMB2": "x",
+      "BTN_TOP": "lb",
+      "BTN_TOP2": "rb",
+      "BTN_BASE": "lt_button",
+      "BTN_BASE2": "rt_button",
+      "BTN_BASE6": "y"
     }
   },
   "suspend_button": "BTN_PINKIE"
