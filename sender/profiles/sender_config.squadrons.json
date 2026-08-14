@@ -44,37 +44,35 @@
       "target": "rx",
       "invert": false,
       "deadzone": 0.12,
-      "expo": 0.35
+      "expo": 0.3
     },
     "ABS_Z": {
-      "target": "rt",
-      "invert": false,
+      "target": "ly",
+      "invert": true,
       "deadzone": 0.03,
       "expo": 0.0
     }
   },
   "buttons": {
     "mode1": {
-      "BTN_TRIGGER": "a",
-      "BTN_THUMB": "rb",
+      "BTN_TRIGGER": "rt_button",
+      "BTN_THUMB": "y",
       "BTN_THUMB2": "b",
       "BTN_TOP": "x",
-      "BTN_TOP2": "y",
-      "BTN_BASE": "lb",
-      "BTN_BASE2": "lt_button",
-      "BTN_BASE6": "rs",
+      "BTN_TOP2": "a",
       "BTN_TRIGGER_HAPPY12": "select_mode1",
       "BTN_TRIGGER_HAPPY13": "select_mode2",
       "BTN_TRIGGER_HAPPY14": "select_mode3"
     },
     "mode2": {
-      "BTN_TRIGGER": "a",
-      "BTN_THUMB": "rb",
-      "BTN_THUMB2": "lb",
-      "BTN_TOP": "ls",
-      "BTN_TOP2": "rs",
-      "BTN_BASE": "lt_button",
-      "BTN_BASE2": "rt_button"
+      "BTN_TRIGGER": "rt_button",
+      "BTN_THUMB": "lb",
+      "BTN_THUMB2": "lt_button",
+      "BTN_TOP": "a",
+      "BTN_TOP2": "ls",
+      "BTN_TRIGGER_HAPPY12": "select_mode1",
+      "BTN_TRIGGER_HAPPY13": "select_mode2",
+      "BTN_TRIGGER_HAPPY14": "select_mode3"
     },
     "mode3": {
       "BTN_TRIGGER": "a",
@@ -82,9 +80,9 @@
       "BTN_THUMB2": "x",
       "BTN_TOP": "lb",
       "BTN_TOP2": "rb",
-      "BTN_BASE": "lt_button",
-      "BTN_BASE2": "rt_button",
-      "BTN_BASE6": "y"
+      "BTN_TRIGGER_HAPPY12": "select_mode1",
+      "BTN_TRIGGER_HAPPY13": "select_mode2",
+      "BTN_TRIGGER_HAPPY14": "select_mode3"
     }
   },
   "suspend_button": "BTN_PINKIE"

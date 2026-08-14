@@ -61,6 +61,12 @@ except ImportError:
 PORT          = 26401
 AXIS_TARGETS  = ("lx", "ly", "rx", "ry", "lt", "rt")
 
+def neutral_axes():
+    """Resting values: sticks centre at 0.0, TRIGGERS release at -1.0.
+    A trigger at 0.0 encodes to a HALF-press (16383), which fires/scrolls —
+    so triggers must rest at -1.0 (encodes to 0)."""
+    return {t: (-1.0 if t in ("lt", "rt") else 0.0) for t in AXIS_TARGETS}
+
 # ─── Oberon button bit positions ──────────────────────────────────────────────
 # (group, mask)  group 1 = byte 13, group 2 = byte 14 of the slot
 OBERON_BTNS = {
@@ -154,11 +160,13 @@ def build_packet(axes, g1, g2):
 # ─── Thread-safe HOTAS state ─────────────────────────────────────────────────
 
 class HOTASState:
-    def __init__(self):
+    def __init__(self, throttle_targets=()):
         self._lock = threading.Lock()
-        self._axes = {t: 0.0 for t in AXIS_TARGETS}
+        self._axes = neutral_axes()
         self._g1 = 0
         self._g2 = 0
+        self._suspended = False
+        self._throttle_targets = tuple(throttle_targets)
 
     def update(self, axes, g1, g2):
         with self._lock:
@@ -166,16 +174,33 @@ class HOTASState:
             self._g1   = g1
             self._g2   = g2
 
+    def set_suspended(self, value):
+        with self._lock:
+            self._suspended = bool(value)
+
+    def toggle_suspended(self):
+        with self._lock:
+            self._suspended = not self._suspended
+            return self._suspended
+
     def snapshot(self):
         with self._lock:
-            return dict(self._axes), self._g1, self._g2
+            axes = dict(self._axes)
+            if self._suspended:
+                # Freeze ONLY the throttle axis, computed at POLL time so it
+                # holds even when the parked throttle sends no new events.
+                # Flight sticks stay live for menu/radial steering.
+                for t in self._throttle_targets:
+                    axes[t] = -1.0 if t in ("lt", "rt") else 0.0
+            return axes, self._g1, self._g2
 
 
 # ─── evdev reader (runs in daemon thread) ────────────────────────────────────
 
 def evdev_reader(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
-                 hat_dpad, state, suspend_code=None, start_suspended=False):
-    axes    = {t: 0.0 for t in AXIS_TARGETS}
+                 hat_dpad, state, suspend_code=None, start_suspended=False,
+                 throttle_targets=("ly",)):
+    axes    = neutral_axes()
     pressed = set()
     hat     = [0, 0]
     mode    = 1
@@ -195,15 +220,30 @@ def evdev_reader(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
 
                 elif ev.type == ecodes.EV_KEY:
                     if suspend_code is not None and ev.code == suspend_code and ev.value == 1:
-                        suspended = not suspended   # toggle on initial press only
+                        suspended = state.toggle_suspended()   # shared, applied at poll time
+                        print(f"[menu] {'THROTTLE FROZEN (menu/radial safe)' if suspended else 'LIVE (flying)'}",
+                              flush=True)
+                        if not suspended:
+                            # Resuming: drop any buttons currently held (the pinkie
+                            # itself, plus anything touched during menu nav) so the
+                            # first live packet doesn't flush a burst of phantom
+                            # inputs (fire, ping, etc.). They re-register on the
+                            # next real press.
+                            pressed.clear()
                     elif ev.code in mode_sel and ev.value:
-                        mode = mode_sel[ev.code]
+                        new_mode = mode_sel[ev.code]
+                        if new_mode != mode:
+                            mode = new_mode
+                            print(f"[mode] switched to M{mode}", flush=True)
                     elif ev.value:
                         pressed.add(ev.code)
                     else:
                         pressed.discard(ev.code)
 
-                # Rebuild button bytes every event
+                # Rebuild button bytes every event. Buttons stay live while
+                # suspended so you can still select/back in menus; only the axes
+                # freeze. The pressed.clear() on resume (above) prevents a held
+                # button from flushing as a phantom input when axes come back.
                 g1, g2 = 0, 0
                 trig_hold = {"lt": False, "rt": False}
 
@@ -225,18 +265,12 @@ def evdev_reader(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
                 if hat[1] <= -1: g2 |= OBERON_BTNS["dpad_up"][1]
                 if hat[1] >= 1:  g2 |= OBERON_BTNS["dpad_down"][1]
 
-                if suspended:
-                    # Freeze axes so the throttle (on a trigger) can't scroll the
-                    # Xbox dashboard. Sticks freeze CENTERED (0.0); triggers freeze
-                    # RELEASED (-1.0 in the shaped range) so they encode to 0, not
-                    # a half-press. Buttons and d-pad still work, so you can
-                    # navigate and launch a game. Press the suspend button to resume.
-                    ax = {"lx": 0.0, "ly": 0.0, "rx": 0.0, "ry": 0.0,
-                          "lt": -1.0, "rt": -1.0}
-                else:
-                    ax = dict(axes)
-                    if trig_hold["lt"]: ax["lt"] = 1.0
-                    if trig_hold["rt"]: ax["rt"] = 1.0
+                # The throttle freeze is applied at poll time inside
+                # HOTASState.snapshot() (so it holds even when the parked
+                # throttle sends no events). Here we just publish live values.
+                ax = dict(axes)
+                if trig_hold["lt"]: ax["lt"] = 1.0
+                if trig_hold["rt"]: ax["rt"] = 1.0
 
                 state.update(ax, g1, g2)
 
@@ -334,6 +368,15 @@ def main():
             sys.exit(f"axis {name}: unknown target '{acfg['target']}'")
         axis_cfg[code] = (acfg["target"], acfg, absinfo[code])
 
+    # Which axis target is the throttle? Convention: ABS_Z is the throttle lever.
+    # The suspend button freezes ONLY this axis, leaving the flight sticks live.
+    # Override in config with "throttle_axis": "<evdev name>" if yours differs.
+    throttle_name = cfg.get("throttle_axis", "ABS_Z")
+    throttle_targets = tuple(
+        acfg["target"] for name, acfg in cfg.get("axes", {}).items()
+        if name == throttle_name and acfg["target"] in AXIS_TARGETS
+    ) or ("ly",)
+
     # Build button config
     mode_sel        = {}
     button_cfg      = {}
@@ -376,11 +419,13 @@ def main():
         print("  Starting SUSPENDED (menu-safe). Axes are frozen; navigate the\n"
               "  dashboard, launch your game, then press the suspend button once.")
 
-    state = HOTASState()
+    state = HOTASState(throttle_targets)
+    state.set_suspended(args.menu)   # --menu starts with the throttle frozen
     threading.Thread(
         target=evdev_reader,
         args=(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
-              cfg.get("hat_to_dpad", True), state, suspend_code, args.menu),
+              cfg.get("hat_to_dpad", True), state, suspend_code, args.menu,
+              throttle_targets),
         daemon=True
     ).start()
 

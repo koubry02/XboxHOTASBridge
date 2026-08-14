@@ -187,12 +187,54 @@ def main():
     ap.add_argument("--game", choices=["squadrons", "generic"], default="squadrons")
     ap.add_argument("--out", default=os.path.join(os.path.dirname(__file__),
                     "../sender/sender_config.calibrated.json"))
+    ap.add_argument("--apply", dest="apply", action="store_true", default=True,
+                    help="copy the result over the active sender_config.json (default: on)")
+    ap.add_argument("--no-apply", dest="apply", action="store_false",
+                    help="don't overwrite the active config, just write the calibrated file")
+    ap.add_argument("--mode", choices=["full", "menu"], default=None,
+                    help="full = axes+suspend button, menu = only re-set the suspend button")
     ap.add_argument("--buttons", action="store_true",
                     help="also walk through button mapping (optional)")
     args = ap.parse_args()
 
     if os.geteuid() != 0:
         print("Note: if you get permission errors, re-run with sudo.\n")
+
+    # Ask what to calibrate if not given on the command line
+    cal_mode = args.mode
+    if cal_mode is None:
+        print("What do you want to calibrate?")
+        print("  [1] Full  — detect all axes AND set the menu-suspend button")
+        print("  [2] Menu  — only set the menu-suspend button (keep current axes)")
+        choice = input("Choose 1 or 2: ").strip()
+        cal_mode = "menu" if choice == "2" else "full"
+
+    active_cfg = os.path.join(os.path.dirname(__file__), "../sender/sender_config.json")
+
+    # ---- MENU-ONLY: just re-detect the suspend button and patch the active config ----
+    if cal_mode == "menu":
+        if not os.path.exists(active_cfg):
+            sys.exit(f"No active config at {active_cfg}. Run a full calibration first.")
+        dev = pick_device()
+        print(f"\nUsing: {dev.name}  ({dev.path})")
+        dev.grab()
+        try:
+            sb = detect_button(dev, "Press the button you want as the menu-suspend toggle")
+        finally:
+            try: dev.ungrab()
+            except Exception: pass
+        if not sb:
+            sys.exit("No button detected. Nothing changed.")
+        c = json.load(open(active_cfg))
+        c["suspend_button"] = sb
+        # make sure it isn't also a game button
+        for m in c.get("buttons", {}).values():
+            if sb in m:
+                del m[sb]
+        json.dump(c, open(active_cfg, "w"), indent=2)
+        print(f"\n✓ Suspend button set to {sb} in {active_cfg}")
+        print("  Restart the server:  sudo systemctl restart hotas-oberon")
+        return
 
     dev = pick_device()
     print(f"\nCalibrating: {dev.name}  ({dev.path})")
@@ -292,8 +334,16 @@ def main():
         print("\nDetected mapping:")
         for name, a in cfg["axes"].items():
             print(f"  {name:10s} -> {a['target']:3s}  (invert={a['invert']})")
-        print("\nRun the server with it:")
-        print(f"  sudo python3 oberon_server.py --config {args.out}")
+
+        # Auto-apply: copy over the active config so you don't have to cp manually
+        if args.apply:
+            import shutil
+            shutil.copyfile(args.out, active_cfg)
+            print(f"\n✓ Applied to active config: {active_cfg}")
+            print("  Restart the server:  sudo systemctl restart hotas-oberon")
+        else:
+            print("\nRun the server with it:")
+            print(f"  sudo python3 oberon_server.py --config {args.out}")
 
     finally:
         try:
