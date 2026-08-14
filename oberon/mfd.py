@@ -57,6 +57,42 @@ def _set_line(line_no, text):
         pass  # display is cosmetic; input must never be affected
 
 
+def _cli(*args):
+    """Run an arbitrary x52cli subcommand, best-effort."""
+    if _X52CLI is None:
+        return
+    try:
+        subprocess.run([_X52CLI, *[str(a) for a in args]],
+                       check=False,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                       timeout=1.0)
+    except Exception:
+        pass
+
+
+# X52 Pro color LED groups (each supports red/amber/green/off).
+_COLOR_LEDS = ("a", "b", "d", "e", "t1", "t2", "t3", "pov", "clutch")
+# On/off-only LEDs.
+_ONOFF_LEDS = ("fire", "throttle")
+
+
+def set_brightness_full():
+    """Turn MFD and LED backlight to full. The X52 Pro MFD is green by
+    hardware; this just makes sure it's lit brightly."""
+    _cli("bri", "mfd", "128")
+    _cli("bri", "led", "128")
+
+
+def set_all_leds(color):
+    """Set every color LED to `color` (green/amber/red/off) and the on/off
+    LEDs to on (for green/amber) or off (for off)."""
+    for led in _COLOR_LEDS:
+        _cli("led", led, color)
+    onoff = "off" if color == "off" else "on"
+    for led in _ONOFF_LEDS:
+        _cli("led", led, onoff)
+
+
 class MFDStatus:
     """
     Tracks bridge status and pushes it to the MFD. Thread-safe. A background
@@ -71,9 +107,15 @@ class MFDStatus:
         self._ping_ms = None
         self._menu = False
         self._last = None  # last rendered tuple, to skip redundant writes
+        self._last_led = None
         self._stop = False
         self._enabled = available()
         if self._enabled:
+            # MFD is green by hardware — bring the backlight up and light the
+            # button LEDs green as a "ready" state.
+            set_brightness_full()
+            set_all_leds("green")
+            self._last_led = "green"
             t = threading.Thread(target=self._loop, args=(refresh_hz,), daemon=True)
             t.start()
 
@@ -120,4 +162,11 @@ class MFDStatus:
                 for i, txt in enumerate(lines):
                     _set_line(i, txt)
                 self._last = lines
+            # LED color reflects state: amber while in menu mode (throttle
+            # frozen), green while flying/live.
+            with self._lock:
+                want_led = "amber" if self._menu else "green"
+            if want_led != self._last_led:
+                set_all_leds(want_led)
+                self._last_led = want_led
             time.sleep(period)
