@@ -7,12 +7,15 @@ Wants=network-online.target
 Type=simple
 WorkingDirectory=/opt/hotas-bridge/oberon
 ExecStart=/usr/bin/python3 /opt/hotas-bridge/oberon/oberon_server.py \
-    --config /opt/hotas-bridge/sender/sender_config.json
+    --config /opt/hotas-bridge/sender/sender_config.json \
+    --menu
 Restart=always
 RestartSec=3
-# Run with elevated priority so evdev reads don't miss events under load
-CPUSchedulingPolicy=fifo
-CPUSchedulingPriority=30
+# Give the reader higher priority so evdev reads don't miss events under load.
+# We use Nice (always permitted) instead of a real-time scheduler:
+# CPUSchedulingPolicy=fifo needs RT privileges the Pi often denies, which
+# fails with status=214/SETSCHEDULER and crash-loops the service.
+Nice=-10
 
 [Install]
 WantedBy=multi-user.target
