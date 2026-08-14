@@ -57,18 +57,21 @@ This is optional and needs the **libx52** driver
 (https://github.com/nirenjan/libx52), which provides the `x52cli` command.
 
 **The installer sets this up for you.** When you run `sudo ./install.sh oberon`
-it offers to install libx52; answer yes and the throttle screen just works. To
-install without being asked, pass `MFD=yes sudo -E ./install.sh oberon`; to skip
-it, `MFD=no`.
+it offers to install libx52. On Ubuntu it uses the maintainer's PPA; on
+**Armbian / Debian / arm64** (where the PPA has no package) it builds libx52
+from source automatically. Answer yes and the throttle screen just works. Pass
+`MFD=yes` to skip the prompt, or `MFD=no` to skip the display.
 
-If you'd rather add it by hand (or later):
+If you'd rather do it by hand on Armbian, build from source (do **not** add the
+Ubuntu PPA to a Debian/Armbian system — it can break apt):
 
 ```bash
-sudo apt-add-repository ppa:nirenjan/libx52
-sudo apt update
-sudo apt install x52pro-linux
+sudo /opt/hotas-bridge/oberon/build_libx52.sh
 sudo systemctl restart hotas-oberon
 ```
+
+That script installs the build dependencies (all standard Debian packages),
+compiles libx52 with meson, installs `x52cli`, and adds the udev rule.
 
 The server auto-detects `x52cli` on startup and begins writing the display; if
 it isn't installed, the bridge runs exactly the same without it. The screen

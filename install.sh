@@ -71,18 +71,38 @@ case "$ROLE" in
             case "$ans" in [Nn]*) DO_MFD="no";; *) DO_MFD="yes";; esac
         fi
         if [ "$DO_MFD" = "yes" ]; then
-            # Try the maintainer's PPA first, then a plain apt package name.
-            if apt-add-repository -y ppa:nirenjan/libx52 2>/dev/null; then
-                apt-get update -qq || true
+            # Ubuntu can use the maintainer's PPA. Armbian/Debian and arm64
+            # generally have NO package there, so build from source instead.
+            . /etc/os-release 2>/dev/null || true
+            IS_UBUNTU="no"; [ "${ID:-}" = "ubuntu" ] && IS_UBUNTU="yes"
+
+            INSTALLED="no"
+            if [ "$IS_UBUNTU" = "yes" ]; then
+                echo "    Ubuntu detected — trying the libx52 PPA..."
+                if apt-add-repository -y ppa:nirenjan/libx52 2>/dev/null; then
+                    apt-get update -qq || true
+                fi
+                if apt-get install -y -qq x52pro-linux 2>/dev/null \
+                   || apt-get install -y -qq libx52-1 2>/dev/null \
+                   || apt-get install -y -qq libx52 2>/dev/null; then
+                    INSTALLED="yes"
+                fi
             fi
-            if apt-get install -y -qq x52pro-linux 2>/dev/null \
-               || apt-get install -y -qq libx52 2>/dev/null; then
-                echo "    libx52 installed — the throttle screen will show status."
-            else
-                echo "    Could not install libx52 from apt (no arm64 package on this"
-                echo "    release, most likely). The bridge will run fine without it."
-                echo "    To add the display later, build from source:"
-                echo "      https://github.com/nirenjan/libx52  (see INSTALL.md)"
+
+            if [ "$INSTALLED" != "yes" ] || ! command -v x52cli >/dev/null 2>&1; then
+                echo "    Building libx52 from source (Armbian/Debian/arm64 path)..."
+                if [ -x "$DST/oberon/build_libx52.sh" ]; then
+                    bash "$DST/oberon/build_libx52.sh" || {
+                        echo "    Source build failed. The bridge will run fine"
+                        echo "    without the display. See oberon/build_libx52.sh."
+                    }
+                else
+                    echo "    build_libx52.sh missing; skipping MFD."
+                fi
+            fi
+
+            if command -v x52cli >/dev/null 2>&1; then
+                echo "    libx52 ready — the throttle screen will show status."
             fi
         fi
     fi

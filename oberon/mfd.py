@@ -22,8 +22,11 @@ import subprocess
 import threading
 import time
 
-# Resolve x52cli once. None means "not installed" -> no-op everywhere.
-_X52CLI = shutil.which("x52cli")
+# Resolve the libx52 CLI once. Different packages/versions name it differently:
+#   x52cli     - nirenjan/libx52 (PPA, source)
+#   x52output  - some distro packages
+# None means "not installed" -> no-op everywhere.
+_X52CLI = shutil.which("x52cli") or shutil.which("x52output")
 
 # libx52's CLI addresses the three MFD lines as 0, 1, 2.
 _LINE_LEN = 16
@@ -34,13 +37,17 @@ def available():
 
 
 def _set_line(line_no, text):
-    """Write one MFD line. Best-effort; never raises into the caller."""
+    """Write one MFD line. Best-effort; never raises into the caller.
+
+    libx52 CLI syntax is:  x52cli mfd <line> "<text>"
+    (line is 0, 1, or 2; text is max 16 chars, extra is discarded).
+    """
     if _X52CLI is None:
         return
     text = (text or "")[:_LINE_LEN]
     try:
         subprocess.run(
-            [_X52CLI, "mfd", "text", str(line_no), text],
+            [_X52CLI, "mfd", str(line_no), text],
             check=False,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
