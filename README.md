@@ -648,3 +648,61 @@ Two ways to handle it:
 
    Change which button by editing `suspend_button` in the config to any evdev
    button name (from `--probe`). Remove the line to disable the feature.
+
+---
+
+## DEFINITIVE throttle-vs-menu fix (`--menu` boot mode)
+
+If the throttle scrolls the Xbox dashboard no matter what, use this. It is
+the reliable fix and doesn't depend on lever position.
+
+**Why it happens:** the Xbox dashboard scrolls lists with the right trigger.
+Throttle is on the right trigger (correct for flying), so a raised throttle
+scrolls the dashboard. No axis mapping avoids this — the dashboard reads
+sticks for navigation and triggers for scrolling, and a throttle has to be one
+of them. The fix is to freeze the axes while you're in menus.
+
+### Step 1 — find your suspend button
+
+Run probe and press buttons until you find one you like as the freeze/unfreeze
+toggle (a base button is ideal — something you won't hit by accident):
+
+```bash
+sudo python3 /opt/hotas-bridge/oberon/oberon_server.py --probe
+# press buttons; note the name, e.g. BTN_BASE, BTN_PINKIE, BTN_BASE6
+```
+
+Put that name in the config:
+```bash
+nano /opt/hotas-bridge/sender/sender_config.json
+#   "suspend_button": "BTN_BASE",     <- your chosen button
+```
+
+### Step 2 — start in menu mode
+
+```bash
+sudo python3 /opt/hotas-bridge/oberon/oberon_server.py --menu
+```
+
+Axes boot FROZEN: the throttle and sticks send neutral, so the dashboard does
+NOT scroll. Navigate with the hat and buttons, launch Squadrons, then press
+your suspend button ONCE to unfreeze and start flying. Press it again any time
+you need to use a menu.
+
+### To make it automatic on boot
+
+Edit the service to add `--menu`:
+```bash
+sudo nano /etc/systemd/system/hotas-oberon.service
+#   ExecStart=... oberon_server.py --config .../sender_config.json --menu
+sudo systemctl daemon-reload && sudo systemctl restart hotas-oberon
+```
+
+### IMPORTANT after any change
+
+The running service keeps the OLD code/config until you restart it. After
+copying files or editing config:
+```bash
+sudo systemctl restart hotas-oberon
+# or if running manually, Ctrl-C and start again
+```

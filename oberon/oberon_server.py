@@ -174,12 +174,12 @@ class HOTASState:
 # ─── evdev reader (runs in daemon thread) ────────────────────────────────────
 
 def evdev_reader(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
-                 hat_dpad, state, suspend_code=None):
+                 hat_dpad, state, suspend_code=None, start_suspended=False):
     axes    = {t: 0.0 for t in AXIS_TARGETS}
     pressed = set()
     hat     = [0, 0]
     mode    = 1
-    suspended = False   # when True, all axes report neutral (for menu nav)
+    suspended = start_suspended   # when True, all axes report neutral (menu nav)
 
     while True:
         try:
@@ -288,6 +288,10 @@ def main():
     ap.add_argument("--list",    action="store_true", help="list input devices and exit")
     ap.add_argument("--probe",   action="store_true", help="print live events and exit")
     ap.add_argument("--verbose", action="store_true")
+    ap.add_argument("--menu", action="store_true",
+                    help="start with axes SUSPENDED (throttle/sticks frozen) so "
+                         "the Xbox dashboard doesn't scroll; press the suspend "
+                         "button once in-game to start flying")
     args = ap.parse_args()
 
     if args.list:
@@ -361,11 +365,19 @@ def main():
         else:
             print(f"  Menu-suspend toggle: press {sb} to freeze/unfreeze axes")
 
+    if args.menu and suspend_code is None:
+        print("  [!] --menu set but no working suspend_button — you won't be able\n"
+              "      to UNFREEZE. Set suspend_button in the config first.")
+
+    if args.menu:
+        print("  Starting SUSPENDED (menu-safe). Axes are frozen; navigate the\n"
+              "  dashboard, launch your game, then press the suspend button once.")
+
     state = HOTASState()
     threading.Thread(
         target=evdev_reader,
         args=(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
-              cfg.get("hat_to_dpad", True), state, suspend_code),
+              cfg.get("hat_to_dpad", True), state, suspend_code, args.menu),
         daemon=True
     ).start()
 
