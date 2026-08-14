@@ -31,20 +31,20 @@
     "ABS_X": {
       "target": "lx",
       "invert": false,
-      "deadzone": 0.1,
+      "deadzone": 0.08,
       "expo": 0.2
     },
     "ABS_Y": {
-      "target": "ly",
+      "target": "ry",
       "invert": true,
-      "deadzone": 0.1,
+      "deadzone": 0.08,
       "expo": 0.2
     },
     "ABS_RZ": {
       "target": "rx",
       "invert": false,
-      "deadzone": 0.14,
-      "expo": 0.4
+      "deadzone": 0.12,
+      "expo": 0.35
     },
     "ABS_Z": {
       "target": "rt",
@@ -62,10 +62,10 @@
       "BTN_TOP2": "y",
       "BTN_BASE": "lb",
       "BTN_BASE2": "lt_button",
-      "BTN_BASE3": "select_mode1",
-      "BTN_BASE4": "select_mode2",
-      "BTN_BASE5": "select_mode3",
-      "BTN_BASE6": "rs"
+      "BTN_BASE6": "rs",
+      "BTN_TRIGGER_HAPPY12": "select_mode1",
+      "BTN_TRIGGER_HAPPY13": "select_mode2",
+      "BTN_TRIGGER_HAPPY14": "select_mode3"
     },
     "mode2": {
       "BTN_TRIGGER": "a",
