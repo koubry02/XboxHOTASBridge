@@ -56,7 +56,7 @@
   "buttons": {
     "mode1": {
       "BTN_TRIGGER": "rt_button",
-      "BTN_THUMB": "y",
+      "BTN_THUMB": "lb",
       "BTN_THUMB2": "b",
       "BTN_TOP": "x",
       "BTN_TOP2": "a",
@@ -66,9 +66,9 @@
     },
     "mode2": {
       "BTN_TRIGGER": "rt_button",
-      "BTN_THUMB": "lb",
-      "BTN_THUMB2": "lt_button",
-      "BTN_TOP": "a",
+      "BTN_THUMB": "rb",
+      "BTN_THUMB2": "y",
+      "BTN_TOP": "lt_button",
       "BTN_TOP2": "ls",
       "BTN_TRIGGER_HAPPY12": "select_mode1",
       "BTN_TRIGGER_HAPPY13": "select_mode2",
