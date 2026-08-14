@@ -83,6 +83,13 @@ def set_brightness_full():
     _cli("bri", "led", "128")
 
 
+def set_mfd_brightness(level_0_128):
+    """Set MFD backlight brightness, 0..128. Used by the throttle brightness
+    knob (ABS_RY) for live control."""
+    lvl = max(0, min(128, int(level_0_128)))
+    _cli("bri", "mfd", str(lvl))
+
+
 def set_all_leds(color):
     """Set every color LED to `color` (green/amber/red/off) and the on/off
     LEDs to on (for green/amber) or off (for off)."""
