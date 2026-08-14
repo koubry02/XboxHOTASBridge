@@ -226,10 +226,13 @@ def evdev_reader(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
                 if hat[1] >= 1:  g2 |= OBERON_BTNS["dpad_down"][1]
 
                 if suspended:
-                    # Freeze every axis at neutral so the throttle (on rt) can't
-                    # scroll the Xbox dashboard. Buttons and d-pad still work,
-                    # so you can navigate and launch a game. Press again to resume.
-                    ax = {t: 0.0 for t in AXIS_TARGETS}
+                    # Freeze axes so the throttle (on a trigger) can't scroll the
+                    # Xbox dashboard. Sticks freeze CENTERED (0.0); triggers freeze
+                    # RELEASED (-1.0 in the shaped range) so they encode to 0, not
+                    # a half-press. Buttons and d-pad still work, so you can
+                    # navigate and launch a game. Press the suspend button to resume.
+                    ax = {"lx": 0.0, "ly": 0.0, "rx": 0.0, "ry": 0.0,
+                          "lt": -1.0, "rt": -1.0}
                 else:
                     ax = dict(axes)
                     if trig_hold["lt"]: ax["lt"] = 1.0
