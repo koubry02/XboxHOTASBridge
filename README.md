@@ -139,11 +139,25 @@ Key fields:
     `dpad_up dpad_down dpad_left dpad_right lt_button rt_button`
   - `select_mode1/2/3`: assign to your X52 mode switch positions
 
-The default config ships reasonable guesses for the X52 — run with it first,
-then tune after your first flight.
+**The default `sender_config.json` is the Star Wars: Squadrons profile.** It
+uses the generic X52 axis codes (`ABS_X` / `ABS_Y` / `ABS_RZ`). If your unit
+is an X52 **Pro** or those codes don't match your hardware, run the
+auto-calibration wizard (see "Auto-calibration" below) and copy its output
+over `sender_config.json` — that is the reliable way to get the right codes:
 
-**Ready-made profiles for your games** are in
-`/opt/hotas-bridge/sender/profiles/`. To use one:
+```bash
+sudo python3 /opt/hotas-bridge/oberon/calibrate.py --game squadrons
+cp /opt/hotas-bridge/sender/sender_config.calibrated.json \
+   /opt/hotas-bridge/sender/sender_config.json
+```
+
+Squadrons default specifics: throttle is absolute on the right trigger (bind
+in-game: Controls > Throttle axis > Right Trigger), left-stick deadzone is
+raised to 0.10 so a resting stick doesn't hold Xbox menus, power management
+is on the POV hat, and `ry` is left unmapped so it can never jam.
+
+**Ready-made profile for MSFS 2024** is in
+`/opt/hotas-bridge/sender/profiles/`. To use it:
 ```bash
 sudo python3 /opt/hotas-bridge/oberon/oberon_server.py \
     --config /opt/hotas-bridge/sender/profiles/sender_config.msfs2024.json
@@ -555,14 +569,15 @@ hotas-bridge/
 │
 ├── oberon/
 │   ├── oberon_server.py           ← OPi A (or any single Pi), Oberon mode
+│   ├── calibrate.py               ← auto-calibration wizard (detects your axes)
 │   └── hotas-oberon.service       ← systemd unit for Oberon mode
 │
 ├── sender/
 │   ├── hotas_sender.py            ← OPi A, USB proxy mode
 │   ├── hotas-sender.service       ← systemd unit
-│   ├── sender_config.json         ← default axis + button config
+│   ├── sender_config.json         ← DEFAULT (= Squadrons profile)
 │   └── profiles/
-│       ├── sender_config.squadrons.json
+│       ├── sender_config.squadrons.json   ← same as the default
 │       └── sender_config.msfs2024.json
 │
 ├── receiver/
@@ -583,3 +598,29 @@ hotas-bridge/
 └── tools/
     └── link_setup.sh              ← dedicated WiFi AP/client, power save off
 ```
+
+---
+
+## Auto-calibration (recommended for X52 Pro or any unit)
+
+Different X52 variants enumerate axes under different codes. Instead of
+guessing, run the wizard once. It detects which code each control uses,
+learns each axis's real range and resting centre, leaves self-dithering
+rotaries unmapped, and writes a ready-to-use config.
+
+```bash
+sudo python3 /opt/hotas-bridge/oberon/calibrate.py --game squadrons
+```
+
+Follow the prompts: it asks you to move the stick L/R, then fwd/back, then
+twist, then the throttle, detecting each in turn. Add `--buttons` to also
+walk through button mapping. It writes `sender/sender_config.calibrated.json`.
+
+Then run the server against it:
+```bash
+sudo python3 /opt/hotas-bridge/oberon/oberon_server.py \
+    --config /opt/hotas-bridge/sender/sender_config.calibrated.json
+```
+
+If a control feels wrong afterward, re-run the wizard, or open the JSON and
+flip that axis's `invert`, or nudge its `deadzone`.

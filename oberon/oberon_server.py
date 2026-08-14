@@ -214,10 +214,13 @@ def evdev_reader(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
                     if tb:
                         trig_hold[tb] = True
 
-                if hat[0] < 0: g2 |= OBERON_BTNS["dpad_left"][1]
-                if hat[0] > 0: g2 |= OBERON_BTNS["dpad_right"][1]
-                if hat[1] < 0: g2 |= OBERON_BTNS["dpad_up"][1]
-                if hat[1] > 0: g2 |= OBERON_BTNS["dpad_down"][1]
+                # POV hats report -1/0/+1. Require a full ±1 before emitting a
+                # d-pad direction so a hat resting slightly off-neutral can
+                # never hold a direction (which would block menu navigation).
+                if hat[0] <= -1: g2 |= OBERON_BTNS["dpad_left"][1]
+                if hat[0] >= 1:  g2 |= OBERON_BTNS["dpad_right"][1]
+                if hat[1] <= -1: g2 |= OBERON_BTNS["dpad_up"][1]
+                if hat[1] >= 1:  g2 |= OBERON_BTNS["dpad_down"][1]
 
                 ax = dict(axes)
                 if trig_hold["lt"]: ax["lt"] = 1.0

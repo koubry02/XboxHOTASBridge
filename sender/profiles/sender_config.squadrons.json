@@ -1,58 +1,89 @@
 {
   "_readme": [
-    "STAR WARS: SQUADRONS profile.",
-    "Gamepad scheme this targets: left stick = yaw/pitch, right stick X = roll,",
-    "right stick Y = throttle, LT/RT = fire, D-pad = power management.",
-    "The POV hat maps to the D-pad automatically (hat_to_dpad), which gives you",
-    "engines/weapons/shields/balance on the hat. That alone is worth the build.",
+    "STAR WARS: SQUADRONS \u2014 refined profile v3 (menu-safe).",
     "",
-    "THROTTLE CAVEAT: Squadrons moves throttle with right-stick-Y as a RATE, not",
-    "an absolute position. Your lever will feel like a speed-of-change control.",
-    "Test it: if it ramps instead of tracking the lever, set throttle_rate_mode",
-    "true below to have the sender emulate absolute positioning."
+    "MENU FIX: the Xbox dashboard navigates on the LEFT STICK and the D-PAD.",
+    "If the flight stick rests even slightly off-centre it holds a menu",
+    "direction and nothing else can move. Left-stick deadzone is raised to 0.10",
+    "so a resting stick reads dead-centre, freeing the POV hat (d-pad) to drive",
+    "menus cleanly. The server also now requires a FULL hat throw before",
+    "emitting a d-pad direction, so a hat resting off-neutral can't hold either.",
+    "",
+    "Your idle probe showed ABS_Z dithering 85<->86 and ABS_RX 78<->79 with",
+    "NOTHING touched. ABS_Z (throttle->rt) is a trigger the menu ignores, so its",
+    "jitter is harmless. ABS_RX is a rotary and stays UNMAPPED, so its dither",
+    "reaches nothing. Neither can affect menus.",
+    "",
+    "THROTTLE: absolute on the RIGHT TRIGGER (rt). Bind in-game: Options >",
+    "Controls > Throttle axis -> Right Trigger (ABSOLUTE). Idle reads 0%,",
+    "physical centre ~50% (drift detent), full lever 100%.",
+    "",
+    "POWER MANAGEMENT on the POV hat (d-pad) \u2014 engines/weapons/shields without",
+    "leaving the stick. Roll on twist (ABS_RZ). ry stays UNMAPPED so it can't jam.",
+    "",
+    "MODES: mode1 FLIGHT, mode2 SYSTEMS/TARGETING, mode3 COMMS/MENU."
   ],
-
   "device_match": "X52",
   "host": "10.42.0.1",
   "port": 5555,
   "hat_to_dpad": true,
-
   "axes": {
-    "ABS_X":  { "target": "lx", "invert": false, "deadzone": 0.06, "expo": 0.25 },
-    "ABS_Y":  { "target": "ly", "invert": true,  "deadzone": 0.06, "expo": 0.25 },
-    "ABS_RZ": { "target": "rx", "invert": false, "deadzone": 0.12, "expo": 0.35 },
-    "ABS_Z":  { "target": "ry", "invert": true,  "deadzone": 0.02, "expo": 0.0  }
+    "ABS_X": {
+      "target": "lx",
+      "invert": false,
+      "deadzone": 0.1,
+      "expo": 0.2
+    },
+    "ABS_Y": {
+      "target": "ly",
+      "invert": true,
+      "deadzone": 0.1,
+      "expo": 0.2
+    },
+    "ABS_RZ": {
+      "target": "rx",
+      "invert": false,
+      "deadzone": 0.14,
+      "expo": 0.4
+    },
+    "ABS_Z": {
+      "target": "rt",
+      "invert": false,
+      "deadzone": 0.03,
+      "expo": 0.0
+    }
   },
-
   "buttons": {
     "mode1": {
-      "BTN_TRIGGER": "rt_button",
-      "BTN_THUMB":   "a",
-      "BTN_THUMB2":  "b",
-      "BTN_TOP":     "x",
-      "BTN_TOP2":    "y",
-      "BTN_PINKIE":  "lb",
-      "BTN_BASE":    "rb",
-      "BTN_BASE2":   "ls",
-      "BTN_BASE3":   "select_mode1",
-      "BTN_BASE4":   "select_mode2",
-      "BTN_BASE5":   "select_mode3",
-      "BTN_BASE6":   "rs"
+      "BTN_TRIGGER": "a",
+      "BTN_THUMB": "rb",
+      "BTN_THUMB2": "b",
+      "BTN_TOP": "x",
+      "BTN_TOP2": "y",
+      "BTN_PINKIE": "lb",
+      "BTN_BASE": "ls",
+      "BTN_BASE2": "rs",
+      "BTN_BASE3": "select_mode1",
+      "BTN_BASE4": "select_mode2",
+      "BTN_BASE5": "select_mode3",
+      "BTN_BASE6": "view"
     },
     "mode2": {
-      "BTN_TRIGGER": "rt_button",
-      "BTN_THUMB":   "view",
-      "BTN_THUMB2":  "menu",
-      "BTN_TOP":     "ls",
-      "BTN_TOP2":    "rs",
-      "BTN_PINKIE":  "lb"
+      "BTN_TRIGGER": "a",
+      "BTN_THUMB": "rb",
+      "BTN_THUMB2": "lb",
+      "BTN_TOP": "y",
+      "BTN_TOP2": "x",
+      "BTN_PINKIE": "b",
+      "BTN_BASE": "ls",
+      "BTN_BASE2": "rs"
     },
     "mode3": {
       "BTN_TRIGGER": "a",
-      "BTN_THUMB":   "dpad_up",
-      "BTN_THUMB2":  "dpad_down",
-      "BTN_TOP":     "dpad_left",
-      "BTN_TOP2":    "dpad_right"
+      "BTN_THUMB": "view",
+      "BTN_THUMB2": "menu",
+      "BTN_TOP": "b",
+      "BTN_TOP2": "x"
     }
   }
 }
