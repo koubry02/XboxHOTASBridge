@@ -624,3 +624,27 @@ sudo python3 /opt/hotas-bridge/oberon/oberon_server.py \
 
 If a control feels wrong afterward, re-run the wizard, or open the JSON and
 flip that axis's `invert`, or nudge its `deadzone`.
+
+---
+
+## Menu-suspend toggle (fixes the throttle scrolling the Xbox dashboard)
+
+On the **Xbox dashboard**, the right trigger scrolls lists vertically. Because
+throttle is mapped to the right trigger, a raised throttle scrolls the
+dashboard on its own and you can't navigate. This is dashboard-only — in
+Squadrons the trigger-as-throttle is exactly right and scrolls nothing.
+
+Two ways to handle it:
+
+1. **Quickest:** pull the throttle all the way DOWN before navigating the
+   dashboard. At zero, the trigger is 0 and nothing scrolls. Launch the game,
+   then throttle up in flight.
+
+2. **Menu-suspend button (built in):** the default config sets
+   `"suspend_button": "BTN_PINKIE"`. Press the pinkie button to FREEZE all
+   axes (throttle and sticks report neutral) so you can navigate the dashboard
+   with the hat/buttons; press it again to resume flying. Buttons and the
+   d-pad keep working while suspended, so you can select and launch a game.
+
+   Change which button by editing `suspend_button` in the config to any evdev
+   button name (from `--probe`). Remove the line to disable the feature.

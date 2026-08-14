@@ -43,20 +43,21 @@ AXIS_ROLES = [
     ("throttle", "THROTTLE lever full range"),
 ]
 
-# Squadrons defaults: role -> (Xbox target, invert, deadzone, expo)
-GAME_MAP = {
+# role -> (Xbox target, invert, deadzone, expo), per game preset.
+# Throttle is ALWAYS on rt (a trigger). A throttle on a stick axis scrolls the
+# Xbox dashboard, so it never goes there regardless of preset.
+ROLE_TARGETS = {
     "squadrons": {
-        "roll":     ("rx", False, 0.14, 0.40),
+        "roll":     ("lx", False, 0.10, 0.20),   # stick L/R = turn, menu-safe
         "pitch":    ("ly", True,  0.10, 0.20),
-        "yaw_stick":("lx", False, 0.10, 0.20),   # stick left/right = lx (turn)
-        "rudder":   ("rx", False, 0.14, 0.40),
+        "rudder":   ("rx", False, 0.14, 0.40),   # twist = roll/yaw
         "throttle": ("rt", False, 0.03, 0.0),
     },
     "generic": {
         "roll":     ("lx", False, 0.08, 0.20),
         "pitch":    ("ly", True,  0.08, 0.20),
         "rudder":   ("rx", False, 0.12, 0.30),
-        "throttle": ("ry", True,  0.02, 0.0),
+        "throttle": ("rt", False, 0.02, 0.0),    # rt, NOT a stick axis
     },
 }
 
@@ -200,7 +201,6 @@ def main():
     try:
         resting, dithering = learn_idle(dev)
 
-        gm = GAME_MAP[args.game]
         axes_cfg = {}
         detected = {}
         print("\n=== Step 2: detect and calibrate each control ===")
@@ -208,15 +208,10 @@ def main():
             code, lo, hi = detect_axis(dev, label, dithering)
             detected[role] = (code, lo, hi)
 
-        # Map roles to Xbox targets
-        # roll = stick L/R -> lx (turn) primarily; also drives rx if you prefer
-        # We follow the game map: roll->lx for menu-friendly nav, rudder->rx.
-        role_target = {
-            "roll":     ("lx", False, 0.10, 0.20),
-            "pitch":    ("ly", True,  0.10, 0.20),
-            "rudder":   ("rx", False, 0.14, 0.40),
-            "throttle": ("rt", False, 0.03, 0.0),
-        }
+        # Map detected roles to Xbox targets. Throttle ALWAYS goes to a trigger
+        # (rt): a stick axis held by a throttle scrolls Xbox menus. Roll on the
+        # left stick keeps menu navigation clean; rudder on the right stick.
+        role_target = ROLE_TARGETS[args.game]
         for role, (code, lo, hi) in detected.items():
             tgt, inv, dz, expo = role_target[role]
             name = ecodes.ABS[code]

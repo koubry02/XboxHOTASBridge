@@ -174,11 +174,12 @@ class HOTASState:
 # ─── evdev reader (runs in daemon thread) ────────────────────────────────────
 
 def evdev_reader(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
-                 hat_dpad, state):
+                 hat_dpad, state, suspend_code=None):
     axes    = {t: 0.0 for t in AXIS_TARGETS}
     pressed = set()
     hat     = [0, 0]
     mode    = 1
+    suspended = False   # when True, all axes report neutral (for menu nav)
 
     while True:
         try:
@@ -193,7 +194,9 @@ def evdev_reader(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
                         hat[1] = ev.value
 
                 elif ev.type == ecodes.EV_KEY:
-                    if ev.code in mode_sel and ev.value:
+                    if suspend_code is not None and ev.code == suspend_code and ev.value == 1:
+                        suspended = not suspended   # toggle on initial press only
+                    elif ev.code in mode_sel and ev.value:
                         mode = mode_sel[ev.code]
                     elif ev.value:
                         pressed.add(ev.code)
@@ -222,9 +225,15 @@ def evdev_reader(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
                 if hat[1] <= -1: g2 |= OBERON_BTNS["dpad_up"][1]
                 if hat[1] >= 1:  g2 |= OBERON_BTNS["dpad_down"][1]
 
-                ax = dict(axes)
-                if trig_hold["lt"]: ax["lt"] = 1.0
-                if trig_hold["rt"]: ax["rt"] = 1.0
+                if suspended:
+                    # Freeze every axis at neutral so the throttle (on rt) can't
+                    # scroll the Xbox dashboard. Buttons and d-pad still work,
+                    # so you can navigate and launch a game. Press again to resume.
+                    ax = {t: 0.0 for t in AXIS_TARGETS}
+                else:
+                    ax = dict(axes)
+                    if trig_hold["lt"]: ax["lt"] = 1.0
+                    if trig_hold["rt"]: ax["rt"] = 1.0
 
                 state.update(ax, g1, g2)
 
@@ -340,11 +349,23 @@ def main():
 
     dev.grab()
 
+    # Optional: a button that toggles axis-suspend (freezes throttle/sticks so
+    # they can't scroll the Xbox dashboard). Set "suspend_button" in the config
+    # to an evdev button name, e.g. "BTN_PINKIE".
+    suspend_code = None
+    sb = cfg.get("suspend_button")
+    if sb:
+        suspend_code = ecodes.ecodes.get(sb)
+        if suspend_code is None:
+            print(f"  [!] suspend_button '{sb}' unknown, ignored")
+        else:
+            print(f"  Menu-suspend toggle: press {sb} to freeze/unfreeze axes")
+
     state = HOTASState()
     threading.Thread(
         target=evdev_reader,
         args=(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
-              cfg.get("hat_to_dpad", True), state),
+              cfg.get("hat_to_dpad", True), state, suspend_code),
         daemon=True
     ).start()
 
