@@ -21,7 +21,7 @@ echo "--- Installing build dependencies (all standard Debian packages) ---"
 apt-get update -qq
 apt-get install -y -qq \
     git meson ninja-build pkg-config gcc make \
-    libusb-1.0-0-dev libhidapi-dev libudev-dev libevdev-dev \
+    libusb-1.0-0-dev libhidapi-dev libudev-dev libevdev-dev libinih-dev \
     automake autoconf gettext autopoint libtool \
     python3 || {
         echo "ERROR: could not install build deps. Check your apt is working."
