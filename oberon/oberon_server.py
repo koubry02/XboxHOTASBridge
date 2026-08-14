@@ -205,7 +205,8 @@ class HOTASState:
 
 def evdev_reader(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
                  hat_dpad, state, suspend_code=None, start_suspended=False,
-                 throttle_targets=("ly",), mfd=None):
+                 throttle_targets=("ly",), mfd=None,
+                 brightness_code=None, brightness_info=None):
     axes    = neutral_axes()
     pressed = set()
     hat     = [0, 0]
@@ -214,11 +215,22 @@ def evdev_reader(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
 
     while True:
         try:
+            _last_bri = [-1]        # last brightness level sent (throttle x52cli spam)
             for ev in dev.read_loop():
                 if ev.type == ecodes.EV_ABS:
                     if ev.code in axis_cfg:
                         tgt, acfg, info = axis_cfg[ev.code]
                         axes[tgt] = shape(ev.value, info, acfg)
+                    elif mfd and brightness_code is not None and ev.code == brightness_code:
+                        # Throttle rotary (ABS_RY) -> live MFD brightness 0..128.
+                        # Map the axis range to 0..128 and only push on change.
+                        info = brightness_info
+                        span = (info.max - info.min) or 1
+                        lvl = int((ev.value - info.min) / span * 128)
+                        lvl = max(0, min(128, lvl))
+                        if lvl != _last_bri[0]:
+                            _last_bri[0] = lvl
+                            mfd.set_mfd_brightness(lvl)
                     elif hat_dpad and ev.code == ecodes.ABS_HAT0X:
                         hat[0] = ev.value
                     elif hat_dpad and ev.code == ecodes.ABS_HAT0Y:
@@ -402,6 +414,18 @@ def main():
         if name == throttle_name and acfg["target"] in AXIS_TARGETS
     ) or ("ly",)
 
+    # Optional: a spare throttle rotary controls MFD brightness live. Default is
+    # ABS_RY; override with "brightness_axis" in config, or set it to null/"" to
+    # disable. Only active when it's NOT already mapped as a game axis.
+    brightness_code = None
+    brightness_info = None
+    bri_name = cfg.get("brightness_axis", "ABS_RY")
+    if bri_name:
+        bc = ecodes.ecodes.get(bri_name)
+        if bc is not None and bc in absinfo and bc not in axis_cfg:
+            brightness_code = bc
+            brightness_info = absinfo[bc]
+
     # Build button config
     mode_sel        = {}
     button_cfg      = {}
@@ -466,7 +490,7 @@ def main():
         target=evdev_reader,
         args=(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
               cfg.get("hat_to_dpad", True), state, suspend_code, args.menu,
-              throttle_targets, mfd),
+              throttle_targets, mfd, brightness_code, brightness_info),
         daemon=True
     ).start()
 
