@@ -206,7 +206,8 @@ class HOTASState:
 def evdev_reader(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
                  hat_dpad, state, suspend_code=None, start_suspended=False,
                  throttle_targets=("ly",), mfd=None,
-                 brightness_code=None, brightness_info=None):
+                 brightness_code=None, brightness_info=None,
+                 led_bri_code=None, led_bri_info=None):
     axes    = neutral_axes()
     pressed = set()
     hat     = [0, 0]
@@ -215,7 +216,8 @@ def evdev_reader(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
 
     while True:
         try:
-            _last_bri = [-1]        # last brightness level sent (throttle x52cli spam)
+            _last_bri = [-1]        # last MFD brightness sent (throttle x52cli spam)
+            _last_led_bri = [-1]    # last LED brightness sent
             for ev in dev.read_loop():
                 if ev.type == ecodes.EV_ABS:
                     if ev.code in axis_cfg:
@@ -223,14 +225,20 @@ def evdev_reader(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
                         axes[tgt] = shape(ev.value, info, acfg)
                     elif mfd and brightness_code is not None and ev.code == brightness_code:
                         # Throttle rotary (ABS_RY) -> live MFD brightness 0..128.
-                        # Map the axis range to 0..128 and only push on change.
                         info = brightness_info
                         span = (info.max - info.min) or 1
-                        lvl = int((ev.value - info.min) / span * 128)
-                        lvl = max(0, min(128, lvl))
+                        lvl = max(0, min(128, int((ev.value - info.min) / span * 128)))
                         if lvl != _last_bri[0]:
                             _last_bri[0] = lvl
                             mfd.set_mfd_brightness(lvl)
+                    elif mfd and led_bri_code is not None and ev.code == led_bri_code:
+                        # Throttle rotary (ABS_RX) -> live button-LED brightness 0..128.
+                        info = led_bri_info
+                        span = (info.max - info.min) or 1
+                        lvl = max(0, min(128, int((ev.value - info.min) / span * 128)))
+                        if lvl != _last_led_bri[0]:
+                            _last_led_bri[0] = lvl
+                            mfd.set_led_brightness(lvl)
                     elif hat_dpad and ev.code == ecodes.ABS_HAT0X:
                         hat[0] = ev.value
                     elif hat_dpad and ev.code == ecodes.ABS_HAT0Y:
@@ -426,6 +434,16 @@ def main():
             brightness_code = bc
             brightness_info = absinfo[bc]
 
+    # Second rotary controls the button-LED brightness (default ABS_RX).
+    led_bri_code = None
+    led_bri_info = None
+    led_name = cfg.get("led_brightness_axis", "ABS_RX")
+    if led_name:
+        lc = ecodes.ecodes.get(led_name)
+        if lc is not None and lc in absinfo and lc not in axis_cfg:
+            led_bri_code = lc
+            led_bri_info = absinfo[lc]
+
     # Build button config
     mode_sel        = {}
     button_cfg      = {}
@@ -490,7 +508,8 @@ def main():
         target=evdev_reader,
         args=(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
               cfg.get("hat_to_dpad", True), state, suspend_code, args.menu,
-              throttle_targets, mfd, brightness_code, brightness_info),
+              throttle_targets, mfd, brightness_code, brightness_info,
+              led_bri_code, led_bri_info),
         daemon=True
     ).start()
 

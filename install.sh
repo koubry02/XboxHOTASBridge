@@ -27,6 +27,8 @@ fi
 echo "=== Installing HOTAS Bridge to $DST ==="
 rsync -a --delete "$SRC"/ "$DST"/ 2>/dev/null || cp -r "$SRC"/. "$DST"/
 chmod +x "$DST"/proxy/*.sh "$DST"/tools/*.sh 2>/dev/null || true
+# Ensure every shell script is 777 on the installed copy
+find "$DST" -name "*.sh" -type f -exec chmod 777 {} \; 2>/dev/null || true
 chmod +x "$DST"/oberon/oberon_server.py \
          "$DST"/sender/hotas_sender.py \
          "$DST"/receiver/hotas_receiver.py 2>/dev/null || true

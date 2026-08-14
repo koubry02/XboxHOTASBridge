@@ -90,6 +90,12 @@ def set_mfd_brightness(level_0_128):
     _cli("bri", "mfd", str(lvl))
 
 
+def set_led_brightness(level_0_128):
+    """Set button-LED brightness, 0..128. Used by the throttle knob (ABS_RX)."""
+    lvl = max(0, min(128, int(level_0_128)))
+    _cli("bri", "led", str(lvl))
+
+
 def set_all_leds(color):
     """Set every color LED to `color` (green/amber/red/off) and the on/off
     LEDs to on (for green/amber) or off (for off)."""
@@ -144,6 +150,14 @@ class MFDStatus:
     def set_menu(self, menu_on):
         with self._lock:
             self._menu = menu_on
+
+    def set_mfd_brightness(self, level_0_128):
+        """Live MFD brightness from the throttle knob (0..128)."""
+        set_mfd_brightness(level_0_128)
+
+    def set_led_brightness(self, level_0_128):
+        """Live button-LED brightness from the throttle knob (0..128)."""
+        set_led_brightness(level_0_128)
 
     def stop(self):
         self._stop = True
