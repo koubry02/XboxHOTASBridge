@@ -49,6 +49,42 @@ The throttle sits on the left stick, so it never fires the weapon.
 
 ---
 
+## Throttle display (X52 Pro MFD)
+
+The X52 Pro's throttle screen can show live bridge status: the Pi's IP, whether
+the Xbox (Oberon) is connected, the poll ping in ms, and whether menu mode is on.
+This is optional and needs the **libx52** driver
+(https://github.com/nirenjan/libx52), which provides the `x52cli` command.
+
+**The installer sets this up for you.** When you run `sudo ./install.sh oberon`
+it offers to install libx52; answer yes and the throttle screen just works. To
+install without being asked, pass `MFD=yes sudo -E ./install.sh oberon`; to skip
+it, `MFD=no`.
+
+If you'd rather add it by hand (or later):
+
+```bash
+sudo apt-add-repository ppa:nirenjan/libx52
+sudo apt update
+sudo apt install x52pro-linux
+sudo systemctl restart hotas-oberon
+```
+
+The server auto-detects `x52cli` on startup and begins writing the display; if
+it isn't installed, the bridge runs exactly the same without it. The screen
+shows:
+
+```
+192.168.1.69          <- Pi IP (enter this in the Oberon app)
+XBOX:ON    45ms       <- Oberon connected + poll ping
+MENU:ON               <- menu mode (throttle frozen) on/off
+```
+
+`XBOX:-- waiting` means Oberon hasn't connected yet. `MENU` flips as you press
+the menu-disable button.
+
+---
+
 ## Setup
 
 ### 1. Install Oberon on the Xbox
@@ -191,6 +227,7 @@ hotas-bridge/
 ├── install.sh                     one-shot installer (sudo ./install.sh oberon)
 ├── oberon/
 │   ├── oberon_server.py           the server: reads X52, talks to Oberon
+│   ├── mfd.py                     optional X52 Pro throttle-screen status (libx52)
 │   ├── calibrate.py               calibration wizard (detects axes + buttons)
 │   └── hotas-oberon.service       starts the server on boot
 └── sender/

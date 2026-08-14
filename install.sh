@@ -55,6 +55,38 @@ case "$ROLE" in
         pip3 install --break-system-packages "websockets>=12"
     fi
 
+    # ---- Optional: X52 Pro MFD status display (libx52) ----
+    # Provides the `x52cli` binary the server uses to write the throttle screen
+    # (Pi IP, Oberon connected, ping, menu mode). Entirely optional: if this
+    # fails or is skipped, the bridge runs exactly the same without the display.
+    if [ "${MFD:-ask}" = "no" ]; then
+        echo "--- Skipping MFD display (MFD=no) ---"
+    elif command -v x52cli >/dev/null 2>&1; then
+        echo "--- MFD display: x52cli already installed ---"
+    else
+        echo "--- Optional: X52 Pro throttle display (libx52) ---"
+        DO_MFD="${MFD:-}"
+        if [ -z "$DO_MFD" ]; then
+            read -r -p "    Install libx52 to show status on the throttle screen? [Y/n] " ans || ans="n"
+            case "$ans" in [Nn]*) DO_MFD="no";; *) DO_MFD="yes";; esac
+        fi
+        if [ "$DO_MFD" = "yes" ]; then
+            # Try the maintainer's PPA first, then a plain apt package name.
+            if apt-add-repository -y ppa:nirenjan/libx52 2>/dev/null; then
+                apt-get update -qq || true
+            fi
+            if apt-get install -y -qq x52pro-linux 2>/dev/null \
+               || apt-get install -y -qq libx52 2>/dev/null; then
+                echo "    libx52 installed — the throttle screen will show status."
+            else
+                echo "    Could not install libx52 from apt (no arm64 package on this"
+                echo "    release, most likely). The bridge will run fine without it."
+                echo "    To add the display later, build from source:"
+                echo "      https://github.com/nirenjan/libx52  (see INSTALL.md)"
+            fi
+        fi
+    fi
+
     svc_install hotas-oberon.service
     systemctl daemon-reload
     systemctl enable --now hotas-oberon.service

@@ -58,6 +58,12 @@ try:
 except ImportError:
     sys.exit("websockets missing.  Run: pip3 install --break-system-packages websockets")
 
+# Optional X52 Pro MFD status display (libx52). Silent no-op if not installed.
+try:
+    import mfd as mfd_mod
+except ImportError:
+    mfd_mod = None
+
 PORT          = 26401
 AXIS_TARGETS  = ("lx", "ly", "rx", "ry", "lt", "rt")
 
@@ -199,7 +205,7 @@ class HOTASState:
 
 def evdev_reader(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
                  hat_dpad, state, suspend_code=None, start_suspended=False,
-                 throttle_targets=("ly",)):
+                 throttle_targets=("ly",), mfd=None):
     axes    = neutral_axes()
     pressed = set()
     hat     = [0, 0]
@@ -223,6 +229,8 @@ def evdev_reader(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
                         suspended = state.toggle_suspended()   # shared, applied at poll time
                         print(f"[menu] {'THROTTLE FROZEN (menu/radial safe)' if suspended else 'LIVE (flying)'}",
                               flush=True)
+                        if mfd:
+                            mfd.set_menu(suspended)
                         if not suspended:
                             # Resuming: drop any buttons currently held (the pinkie
                             # itself, plus anything touched during menu nav) so the
@@ -280,7 +288,7 @@ def evdev_reader(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
 
 # ─── WebSocket server ─────────────────────────────────────────────────────────
 
-def make_handler(state, verbose):
+def make_handler(state, verbose, mfd=None):
     hostname = socket.gethostname()
     handshake = bytes([0x0A]) + hostname.encode("utf-8")
 
@@ -288,6 +296,13 @@ def make_handler(state, verbose):
         addr = websocket.remote_address
         print(f"[oberon] connected from {addr[0]}")
         await websocket.send(handshake)
+        if mfd:
+            mfd.set_connected(True)
+
+        # Smoothed poll interval -> shown on the MFD as "ping" (round-trip
+        # cadence of the Oberon client's polls, in ms).
+        ema = None
+        last_poll = time.monotonic()
 
         try:
             async for msg in websocket:
@@ -295,6 +310,14 @@ def make_handler(state, verbose):
                     continue
                 if msg[0] != 0xFA:
                     continue
+
+                now = time.monotonic()
+                dt = (now - last_poll) * 1000.0  # ms since last poll
+                last_poll = now
+                if 0 < dt < 1000:
+                    ema = dt if ema is None else (0.8 * ema + 0.2 * dt)
+                    if mfd:
+                        mfd.set_ping(ema)
 
                 axes, g1, g2 = state.snapshot()
                 pkt = build_packet(axes, g1, g2)
@@ -309,6 +332,8 @@ def make_handler(state, verbose):
 
         except websockets.exceptions.ConnectionClosed:
             pass
+        if mfd:
+            mfd.set_connected(False)
         print(f"[oberon] disconnected from {addr[0]}")
 
     return handler
@@ -419,17 +444,7 @@ def main():
         print("  Starting SUSPENDED (menu-safe). Axes are frozen; navigate the\n"
               "  dashboard, launch your game, then press the suspend button once.")
 
-    state = HOTASState(throttle_targets)
-    state.set_suspended(args.menu)   # --menu starts with the throttle frozen
-    threading.Thread(
-        target=evdev_reader,
-        args=(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
-              cfg.get("hat_to_dpad", True), state, suspend_code, args.menu,
-              throttle_targets),
-        daemon=True
-    ).start()
-
-    # Print this board's IP so the user can enter it into the Xbox app
+    # Determine this board's IP first (shown on the MFD and printed for the user)
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("8.8.8.8", 80))
@@ -438,8 +453,25 @@ def main():
     except Exception:
         local_ip = "unknown"
 
+    # Optional X52 Pro MFD status display (libx52). None if not installed.
+    mfd = None
+    if mfd_mod is not None and mfd_mod.available():
+        mfd = mfd_mod.MFDStatus(ip=local_ip)
+        mfd.set_menu(args.menu)
+        print("[oberon] MFD status display: ON (libx52 detected)")
+
+    state = HOTASState(throttle_targets)
+    state.set_suspended(args.menu)   # --menu starts with the throttle frozen
+    threading.Thread(
+        target=evdev_reader,
+        args=(dev, axis_cfg, mode_sel, button_cfg, trigger_btn_cfg,
+              cfg.get("hat_to_dpad", True), state, suspend_code, args.menu,
+              throttle_targets, mfd),
+        daemon=True
+    ).start()
+
     async def run():
-        handler = make_handler(state, args.verbose)
+        handler = make_handler(state, args.verbose, mfd)
         async with ws_serve(handler, "0.0.0.0", args.port):
             print(f"[oberon] WebSocket server on port {args.port}")
             print(f"[oberon] Board IP : {local_ip}")
