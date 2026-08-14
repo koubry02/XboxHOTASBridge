@@ -56,34 +56,49 @@
   "buttons": {
     "mode1": {
       "BTN_TRIGGER": "rt_button",
-      "BTN_THUMB": "lb",
-      "BTN_THUMB2": "b",
-      "BTN_TOP": "x",
+      "BTN_THUMB": "rb",
+      "BTN_PINKIE": "lb",
       "BTN_TOP2": "a",
+      "BTN_TOP": "b",
+      "BTN_THUMB2": "rs",
+      "BTN_BASE3": "menu",
+      "BTN_BASE5": "view",
+      "BTN_BASE": "lt_button",
+      "BTN_TRIGGER_HAPPY15": "ls",
       "BTN_TRIGGER_HAPPY12": "select_mode1",
-      "BTN_TRIGGER_HAPPY13": "select_mode2",
-      "BTN_TRIGGER_HAPPY14": "select_mode3"
+      "BTN_TRIGGER_HAPPY13": "select_mode1",
+      "BTN_TRIGGER_HAPPY14": "select_mode1"
     },
     "mode2": {
       "BTN_TRIGGER": "rt_button",
       "BTN_THUMB": "rb",
-      "BTN_THUMB2": "y",
-      "BTN_TOP": "lt_button",
-      "BTN_TOP2": "ls",
+      "BTN_PINKIE": "lb",
+      "BTN_TOP2": "a",
+      "BTN_TOP": "b",
+      "BTN_THUMB2": "rs",
+      "BTN_BASE3": "menu",
+      "BTN_BASE5": "view",
+      "BTN_BASE": "lt_button",
+      "BTN_TRIGGER_HAPPY15": "ls",
       "BTN_TRIGGER_HAPPY12": "select_mode1",
-      "BTN_TRIGGER_HAPPY13": "select_mode2",
-      "BTN_TRIGGER_HAPPY14": "select_mode3"
+      "BTN_TRIGGER_HAPPY13": "select_mode1",
+      "BTN_TRIGGER_HAPPY14": "select_mode1"
     },
     "mode3": {
-      "BTN_TRIGGER": "a",
-      "BTN_THUMB": "b",
-      "BTN_THUMB2": "x",
-      "BTN_TOP": "lb",
-      "BTN_TOP2": "rb",
+      "BTN_TRIGGER": "rt_button",
+      "BTN_THUMB": "rb",
+      "BTN_PINKIE": "lb",
+      "BTN_TOP2": "a",
+      "BTN_TOP": "b",
+      "BTN_THUMB2": "rs",
+      "BTN_BASE3": "menu",
+      "BTN_BASE5": "view",
+      "BTN_BASE": "lt_button",
+      "BTN_TRIGGER_HAPPY15": "ls",
       "BTN_TRIGGER_HAPPY12": "select_mode1",
-      "BTN_TRIGGER_HAPPY13": "select_mode2",
-      "BTN_TRIGGER_HAPPY14": "select_mode3"
+      "BTN_TRIGGER_HAPPY13": "select_mode1",
+      "BTN_TRIGGER_HAPPY14": "select_mode1"
     }
   },
-  "suspend_button": "BTN_PINKIE"
+  "suspend_button": "BTN_BASE2"
 }

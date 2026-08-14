@@ -11,6 +11,34 @@ X52 --USB--> Orange Pi Zero 3 --WiFi--> Oberon app on Xbox --> game
 
 ---
 
+## Layout (Star Wars: Squadrons)
+
+![X52 Pro layout](x52_layout.png)
+
+Single mode — the mode dial position doesn't matter, all layers are identical.
+The throttle sits on the left stick, so it never fires the weapon.
+
+| Xbox | HOTAS control | Squadrons function |
+|------|---------------|--------------------|
+| Left stick Y | Stick forward/back | Pitch |
+| Left stick X | Stick left/right | Roll |
+| Right stick X | Twist | Yaw |
+| Left stick Y | Throttle lever | Throttle (up = forward) |
+| RT | Main trigger | Fire |
+| RB | Thumb FIRE button | Fire Right Auxiliary |
+| LB | Pinkie trigger | Fire Left Auxiliary |
+| A | C head button | Cycle Targets |
+| B | B head button | Deploy Countermeasures |
+| RS | A head button | Free Look |
+| LT | D button (throttle) | Select Target Ahead |
+| LS | I button (throttle) | Boost |
+| Menu | T1 rocker | Menu |
+| View | T2 rocker | Show Loadout |
+| D-pad | POV hat | Power: up=weapon, left=engine, down=balance, right=shields |
+| — | E button (throttle) | Menu-disable: freezes the throttle for menus/radials |
+
+---
+
 ## What you need
 
 - Saitek X52 or X52 Pro
